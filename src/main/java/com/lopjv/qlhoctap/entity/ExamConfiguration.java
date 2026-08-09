@@ -16,31 +16,31 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Khóa học / Chương trình học tổng thể.
+ * Ma trận cấu hình trộn đề tự động.
  */
 @Entity
-@Table(name = "courses")
+@Table(name = "exam_configurations")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Course extends BaseEntity {
+public class ExamConfiguration {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", nullable = false, unique = true, length = 30)
-    private String code;
-
-    @Column(name = "title", nullable = false, length = 200)
-    private String title;
-
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    @JoinColumn(name = "exam_id", nullable = false)
+    private Exam exam;
+
+    @Column(name = "chapter_topic", length = 200)
+    private String chapterTopic;
+
+    @Column(name = "difficulty", nullable = false, length = 20)
+    private String difficulty;
+
+    @Column(name = "question_count", nullable = false)
+    private Integer questionCount;
 }

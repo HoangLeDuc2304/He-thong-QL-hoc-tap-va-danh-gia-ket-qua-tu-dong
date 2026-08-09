@@ -52,7 +52,7 @@ public class JwtTokenProvider {
                 .compact();
     }
 
-    public String getEmailFromToken(String token) {
+    public String getUsernameFromToken(String token) {
         Claims claims = parseClaimsFromToken(token);
         return claims.getSubject();
     }

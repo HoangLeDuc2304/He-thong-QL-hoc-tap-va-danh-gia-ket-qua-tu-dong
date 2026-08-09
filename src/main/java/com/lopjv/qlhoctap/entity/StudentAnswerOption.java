@@ -1,6 +1,5 @@
 package com.lopjv.qlhoctap.entity;
 
-import jakarta.persistence.Column;
 import jakarta.persistence.Embeddable;
 import jakarta.persistence.EmbeddedId;
 import jakarta.persistence.Entity;
@@ -19,32 +18,29 @@ import lombok.Setter;
 import java.io.Serializable;
 
 /**
- * Snapshot câu hỏi trong đề thi (Composite PK: exam_id + question_id).
+ * Đáp án sinh viên đã chọn (hỗ trợ MULTIPLE_CHOICE).
  */
 @Entity
-@Table(name = "exam_questions")
+@Table(name = "student_answer_options")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class ExamQuestion {
+public class StudentAnswerOption {
 
     @EmbeddedId
-    private ExamQuestionId id;
+    private StudentAnswerOptionId id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("examId")
-    @JoinColumn(name = "exam_id")
-    private Exam exam;
+    @MapsId("studentAnswerId")
+    @JoinColumn(name = "student_answer_id")
+    private StudentAnswer studentAnswer;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @MapsId("questionId")
-    @JoinColumn(name = "question_id")
-    private Question question;
-
-    @Column(name = "order_index", nullable = false)
-    private Integer orderIndex;
+    @MapsId("optionId")
+    @JoinColumn(name = "option_id")
+    private QuestionOption option;
 
     @Embeddable
     @Getter
@@ -52,8 +48,8 @@ public class ExamQuestion {
     @NoArgsConstructor
     @AllArgsConstructor
     @EqualsAndHashCode
-    public static class ExamQuestionId implements Serializable {
-        private Long examId;
-        private Long questionId;
+    public static class StudentAnswerOptionId implements Serializable {
+        private Long studentAnswerId;
+        private Long optionId;
     }
 }

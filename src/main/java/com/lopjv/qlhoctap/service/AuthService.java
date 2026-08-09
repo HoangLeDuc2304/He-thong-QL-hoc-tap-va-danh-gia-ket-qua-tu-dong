@@ -1,100 +1,83 @@
 package com.lopjv.qlhoctap.service;
 
-import com.lopjv.qlhoctap.dto.AuthResponse;
 import com.lopjv.qlhoctap.dto.LoginRequest;
+import com.lopjv.qlhoctap.dto.LoginResponse;
 import com.lopjv.qlhoctap.dto.RegisterRequest;
+import com.lopjv.qlhoctap.entity.Role;
 import com.lopjv.qlhoctap.entity.User;
-import com.lopjv.qlhoctap.enums.UserRole;
+import com.lopjv.qlhoctap.repository.RoleRepository;
 import com.lopjv.qlhoctap.repository.UserRepository;
 import com.lopjv.qlhoctap.security.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.Set;
+
+/**
+ * Xử lý đăng nhập và đăng ký.
+ */
 @Service
 public class AuthService {
 
     private final AuthenticationManager authenticationManager;
-    private final UserRepository userRepository;
-    private final PasswordEncoder passwordEncoder;
     private final JwtTokenProvider jwtTokenProvider;
+    private final UserRepository userRepository;
+    private final RoleRepository roleRepository;
+    private final PasswordEncoder passwordEncoder;
 
     public AuthService(
             AuthenticationManager authenticationManager,
+            JwtTokenProvider jwtTokenProvider,
             UserRepository userRepository,
-            PasswordEncoder passwordEncoder,
-            JwtTokenProvider jwtTokenProvider) {
+            RoleRepository roleRepository,
+            PasswordEncoder passwordEncoder) {
         this.authenticationManager = authenticationManager;
-        this.userRepository = userRepository;
-        this.passwordEncoder = passwordEncoder;
         this.jwtTokenProvider = jwtTokenProvider;
+        this.userRepository = userRepository;
+        this.roleRepository = roleRepository;
+        this.passwordEncoder = passwordEncoder;
     }
 
-    public AuthResponse login(LoginRequest loginRequest) {
+    public LoginResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
-                        loginRequest.getEmail(),
+                        loginRequest.getUsername(),
                         loginRequest.getPassword()
                 )
         );
 
-        SecurityContextHolder.getContext().setAuthentication(authentication);
+        String token = jwtTokenProvider.generateToken(authentication);
 
-        String jwtToken = jwtTokenProvider.generateToken(authentication);
-
-        User user = userRepository.findByEmail(loginRequest.getEmail())
-                .orElseThrow(() -> new RuntimeException(
-                        "Không tìm thấy người dùng với email: " + loginRequest.getEmail()));
-
-        return AuthResponse.builder()
-                .accessToken(jwtToken)
-                .tokenType("Bearer")
-                .userId(user.getId())
-                .fullName(user.getFullName())
-                .email(user.getEmail())
-                .role(user.getRole().name())
+        return LoginResponse.builder()
+                .token(token)
+                .username(loginRequest.getUsername())
                 .build();
     }
 
     @Transactional
-    public AuthResponse register(RegisterRequest registerRequest) {
+    public void register(RegisterRequest registerRequest) {
+        if (userRepository.existsByUsername(registerRequest.getUsername())) {
+            throw new RuntimeException("Username đã tồn tại: " + registerRequest.getUsername());
+        }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email đã được sử dụng: " + registerRequest.getEmail());
+            throw new RuntimeException("Email đã tồn tại: " + registerRequest.getEmail());
         }
 
-        UserRole userRole = determineUserRole(registerRequest.getRole());
+        Role studentRole = roleRepository.findByName("ROLE_STUDENT")
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy role ROLE_STUDENT"));
 
-        User newUser = User.builder()
+        User user = User.builder()
+                .username(registerRequest.getUsername())
+                .password(passwordEncoder.encode(registerRequest.getPassword()))
                 .fullName(registerRequest.getFullName())
                 .email(registerRequest.getEmail())
-                .password(passwordEncoder.encode(registerRequest.getPassword()))
-                .role(userRole)
                 .isActive(true)
+                .roles(Set.of(studentRole))
                 .build();
-
-        userRepository.save(newUser);
-
-        LoginRequest autoLoginRequest = new LoginRequest(
-                registerRequest.getEmail(),
-                registerRequest.getPassword()
-        );
-
-        return login(autoLoginRequest);
-    }
-    
-    private UserRole determineUserRole(String roleString) {
-        if (roleString == null || roleString.isBlank()) {
-            return UserRole.STUDENT;
-        }
-
-        try {
-            return UserRole.valueOf(roleString.toUpperCase().trim());
-        } catch (IllegalArgumentException exception) {
-            return UserRole.STUDENT;
-        }
+        userRepository.save(user);
     }
 }

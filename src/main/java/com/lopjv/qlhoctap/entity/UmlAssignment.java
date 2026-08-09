@@ -15,17 +15,20 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
+import java.time.OffsetDateTime;
+
 /**
- * Ngân hàng câu hỏi (gắn với môn học).
+ * Bài tập UML do Giảng viên tạo.
  */
 @Entity
-@Table(name = "question_bank")
+@Table(name = "uml_assignments")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Question extends BaseEntity {
+public class UmlAssignment extends BaseEntity {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
@@ -39,16 +42,19 @@ public class Question extends BaseEntity {
     @JoinColumn(name = "created_by", nullable = false)
     private User createdBy;
 
-    @Column(name = "chapter_topic", length = 200)
-    private String chapterTopic;
+    @Column(name = "title", nullable = false, length = 200)
+    private String title;
 
-    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
-    private String content;
+    @Column(name = "description", nullable = false, columnDefinition = "TEXT")
+    private String description;
 
-    @Column(name = "question_type", nullable = false, length = 30)
+    @Column(name = "rubric_criteria", columnDefinition = "TEXT")
+    private String rubricCriteria;
+
+    @Column(name = "max_score", nullable = false, precision = 5, scale = 2)
     @Builder.Default
-    private String questionType = "SINGLE_CHOICE";
+    private BigDecimal maxScore = new BigDecimal("10.00");
 
-    @Column(name = "difficulty", nullable = false, length = 20)
-    private String difficulty;
+    @Column(name = "due_date", nullable = false)
+    private OffsetDateTime dueDate;
 }

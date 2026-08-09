@@ -9,55 +9,50 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.math.BigDecimal;
 import java.time.OffsetDateTime;
 
 /**
- * Đề thi (tạo theo môn học).
+ * Chi tiết câu trả lời của sinh viên cho từng câu hỏi.
  */
 @Entity
-@Table(name = "exams")
+@Table(name = "student_answers", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"student_exam_id", "question_id"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Exam extends BaseEntity {
+public class StudentAnswer {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "subject_id", nullable = false)
-    private Subject subject;
+    @JoinColumn(name = "student_exam_id", nullable = false)
+    private StudentExam studentExam;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    @JoinColumn(name = "question_id", nullable = false)
+    private Question question;
 
-    @Column(name = "title", nullable = false, length = 200)
-    private String title;
+    @Column(name = "is_correct")
+    private Boolean isCorrect;
 
-    @Column(name = "duration_minutes", nullable = false)
-    private Integer durationMinutes;
-
-    @Column(name = "start_time", nullable = false)
-    private OffsetDateTime startTime;
-
-    @Column(name = "end_time", nullable = false)
-    private OffsetDateTime endTime;
-
-    @Column(name = "max_tab_switches", nullable = false)
+    @Column(name = "score_given", precision = 4, scale = 2)
     @Builder.Default
-    private Integer maxTabSwitches = 3;
+    private BigDecimal scoreGiven = BigDecimal.ZERO;
 
-    @Column(name = "status", nullable = false, length = 20)
+    @Column(name = "updated_at", nullable = false)
     @Builder.Default
-    private String status = "DRAFT";
+    private OffsetDateTime updatedAt = OffsetDateTime.now();
 }

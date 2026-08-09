@@ -1,225 +1,226 @@
+-- =============================================================================
+-- CƠ SỞ DỮ LIỆU HỆ THỐNG E-LEARNING, ĐÁNH GIÁ KẾT QUẢ HỌC TẬP VÀ QUẢN LÝ LỚP HỌC
+-- Công nghệ: PostgreSQL
+-- =============================================================================
 
--- Tạo kiểu ENUM cho vai trò người dùng
-CREATE TYPE user_role AS ENUM ('ADMIN', 'TEACHER', 'STUDENT');
+-- =============================================================================
+-- PHÂN HỆ 1: AUTHENTICATION SERVICE (XÁC THỰC, BẢO MẬT VÀ PHÂN QUYỀN RBAC)
+-- =============================================================================
 
--- Tạo kiểu ENUM cho độ khó câu hỏi
-CREATE TYPE question_difficulty AS ENUM ('EASY', 'MEDIUM', 'HARD');
+CREATE TABLE roles (
+    id SERIAL PRIMARY KEY,
+    name VARCHAR(50) NOT NULL UNIQUE,
+    description VARCHAR(255)
+);
 
--- BẢNG USERS: Lưu thông tin người dùng (Admin, Giáo viên, Sinh viên)
 CREATE TABLE users (
-    id              BIGSERIAL       PRIMARY KEY,
-    full_name       VARCHAR(150)    NOT NULL,
-    email           VARCHAR(255)    NOT NULL UNIQUE,
-    password        VARCHAR(255)    NOT NULL,
-    role            user_role       NOT NULL DEFAULT 'STUDENT',
-    avatar_url      VARCHAR(500),
-    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
-    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP
+    id BIGSERIAL PRIMARY KEY,
+    username VARCHAR(50) NOT NULL UNIQUE,
+    password VARCHAR(255) NOT NULL,
+    full_name VARCHAR(100) NOT NULL,
+    email VARCHAR(100) NOT NULL UNIQUE,
+    is_active BOOLEAN DEFAULT TRUE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- Index để tìm kiếm người dùng theo vai trò
-CREATE INDEX idx_users_role ON users (role);
+CREATE TABLE user_roles (
+    user_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    role_id INT NOT NULL REFERENCES roles(id) ON DELETE CASCADE,
+    PRIMARY KEY (user_id, role_id)
+);
 
 -- =============================================================================
--- BẢNG COURSES: Lưu thông tin khóa học
+-- PHẦN II: PHÂN HỆ LỘ TRÌNH HỌC TẬP (LMS: COURSE -> SUBJECT -> LESSON)
 -- =============================================================================
+
 CREATE TABLE courses (
-    id              BIGSERIAL       PRIMARY KEY,
-    course_name     VARCHAR(255)    NOT NULL,
-    description     TEXT,
-    teacher_id      BIGINT          NOT NULL,
-    is_published    BOOLEAN         NOT NULL DEFAULT FALSE,
-    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_courses_teacher
-        FOREIGN KEY (teacher_id) REFERENCES users (id) ON DELETE CASCADE
+    id BIGSERIAL PRIMARY KEY,
+    code VARCHAR(30) NOT NULL UNIQUE,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    created_by BIGINT NOT NULL REFERENCES users(id),
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- Index để tìm khóa học theo giáo viên
-CREATE INDEX idx_courses_teacher_id ON courses (teacher_id);
+CREATE TABLE subjects (
+    id BIGSERIAL PRIMARY KEY,
+    course_id BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    code VARCHAR(30) NOT NULL,
+    title VARCHAR(200) NOT NULL,
+    description TEXT,
+    teacher_id BIGINT NOT NULL REFERENCES users(id),
+    order_index INT DEFAULT 1 NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE (course_id, code)
+);
 
--- BẢNG LESSONS: Lưu thông tin bài học thuộc khóa học
 CREATE TABLE lessons (
-    id              BIGSERIAL       PRIMARY KEY,
-    course_id       BIGINT          NOT NULL,
-    lesson_title    VARCHAR(255)    NOT NULL,
-    content         TEXT,
-    chapter         VARCHAR(100),
-    order_index     INTEGER         NOT NULL DEFAULT 0,
-    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_lessons_course
-        FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE
+    id BIGSERIAL PRIMARY KEY,
+    subject_id BIGINT NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+    title VARCHAR(200) NOT NULL,
+    content TEXT,
+    video_url VARCHAR(500),
+    attachment_url VARCHAR(500),
+    order_index INT DEFAULT 1 NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
 );
 
--- Index để truy vấn bài học theo khóa học và thứ tự
-CREATE INDEX idx_lessons_course_id ON lessons (course_id);
-CREATE INDEX idx_lessons_course_order ON lessons (course_id, order_index);
+CREATE TABLE enrollments (
+    id BIGSERIAL PRIMARY KEY,
+    course_id BIGINT NOT NULL REFERENCES courses(id) ON DELETE CASCADE,
+    student_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    enrolled_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE (course_id, student_id)
+);
 
--- BẢNG QUESTION_BANK: Ngân hàng câu hỏi trắc nghiệm
--- Mỗi câu hỏi có 4 đáp án (A, B, C, D), đáp án đúng, và độ khó
+-- =============================================================================
+-- PHẦN III: NGÂN HÀNG CÂU HỎI TRẮC NGHIỆM & ĐÁP ÁN
+-- =============================================================================
+
 CREATE TABLE question_bank (
-    id              BIGSERIAL               PRIMARY KEY,
-    course_id       BIGINT                  NOT NULL,
-    chapter         VARCHAR(100),
-    content         TEXT                    NOT NULL,
-    option_a        VARCHAR(500)            NOT NULL,
-    option_b        VARCHAR(500)            NOT NULL,
-    option_c        VARCHAR(500)            NOT NULL,
-    option_d        VARCHAR(500)            NOT NULL,
-    correct_option  CHAR(1)                 NOT NULL CHECK (correct_option IN ('A', 'B', 'C', 'D')),
-    difficulty      question_difficulty     NOT NULL DEFAULT 'MEDIUM',
-    created_by      BIGINT                  NOT NULL,
-    created_at      TIMESTAMP               NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP               NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_question_bank_course
-        FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE,
-
-    CONSTRAINT fk_question_bank_created_by
-        FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE
+    id BIGSERIAL PRIMARY KEY,
+    subject_id BIGINT NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+    created_by BIGINT NOT NULL REFERENCES users(id),
+    chapter_topic VARCHAR(200),
+    content TEXT NOT NULL,
+    question_type VARCHAR(30) DEFAULT 'SINGLE_CHOICE' NOT NULL,
+    difficulty VARCHAR(20) NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT chk_question_type CHECK (question_type IN ('SINGLE_CHOICE', 'MULTIPLE_CHOICE')),
+    CONSTRAINT chk_difficulty CHECK (difficulty IN ('EASY', 'MEDIUM', 'HARD'))
 );
 
-CREATE INDEX idx_question_bank_course_chapter_difficulty
-    ON question_bank (course_id, chapter, difficulty);
+CREATE TABLE question_options (
+    id BIGSERIAL PRIMARY KEY,
+    question_id BIGINT NOT NULL REFERENCES question_bank(id) ON DELETE CASCADE,
+    content TEXT NOT NULL,
+    is_correct BOOLEAN DEFAULT FALSE NOT NULL
+);
 
-CREATE INDEX idx_question_bank_course_difficulty
-    ON question_bank (course_id, difficulty);
+-- =============================================================================
+-- PHẦN IV: QUẢN LÝ THI & TỰ ĐỘNG TRỘN ĐỀ
+-- =============================================================================
 
-CREATE INDEX idx_question_bank_created_by
-    ON question_bank (created_by);
-
--- BẢNG EXAMS: Lưu thông tin đề thi / bài kiểm tra
 CREATE TABLE exams (
-    id              BIGSERIAL       PRIMARY KEY,
-    course_id       BIGINT          NOT NULL,
-    exam_title      VARCHAR(255)    NOT NULL,
-    description     TEXT,
-    duration_minutes INTEGER        NOT NULL DEFAULT 60,
-    max_tab_switches INTEGER        NOT NULL DEFAULT 3,
-    start_time      TIMESTAMP       NOT NULL,
-    end_time        TIMESTAMP       NOT NULL,
-    is_active       BOOLEAN         NOT NULL DEFAULT TRUE,
-    created_by      BIGINT          NOT NULL,
-    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    updated_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_exams_course
-        FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE,
-
-    CONSTRAINT fk_exams_created_by
-        FOREIGN KEY (created_by) REFERENCES users (id) ON DELETE CASCADE,
-
-    CONSTRAINT chk_exams_time_range
-        CHECK (end_time > start_time)
+    id BIGSERIAL PRIMARY KEY,
+    subject_id BIGINT NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+    created_by BIGINT NOT NULL REFERENCES users(id),
+    title VARCHAR(200) NOT NULL,
+    duration_minutes INT NOT NULL CHECK (duration_minutes > 0),
+    start_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    end_time TIMESTAMP WITH TIME ZONE NOT NULL,
+    max_tab_switches INT DEFAULT 3 NOT NULL,
+    status VARCHAR(20) DEFAULT 'DRAFT' NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    CONSTRAINT chk_exam_time CHECK (end_time > start_time),
+    CONSTRAINT chk_exam_status CHECK (status IN ('DRAFT', 'PUBLISHED', 'ARCHIVED'))
 );
 
-CREATE INDEX idx_exams_course_id ON exams (course_id);
+CREATE TABLE exam_configurations (
+    id BIGSERIAL PRIMARY KEY,
+    exam_id BIGINT NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+    chapter_topic VARCHAR(200),
+    difficulty VARCHAR(20) NOT NULL,
+    question_count INT NOT NULL CHECK (question_count > 0),
+    CONSTRAINT chk_config_difficulty CHECK (difficulty IN ('EASY', 'MEDIUM', 'HARD'))
+);
 
-CREATE INDEX idx_exams_created_by ON exams (created_by);
-
--- BẢNG EXAM_QUESTIONS: Bảng trung gian lưu đề thi sau khi trộn
--- Mỗi bản ghi là một câu hỏi đã được gán vào đề thi cụ thể
 CREATE TABLE exam_questions (
-    id              BIGSERIAL       PRIMARY KEY,
-    exam_id         BIGINT          NOT NULL,
-    question_id     BIGINT          NOT NULL,
-    question_order  INTEGER         NOT NULL DEFAULT 0,
-
-    CONSTRAINT fk_exam_questions_exam
-        FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE,
-
-    CONSTRAINT fk_exam_questions_question
-        FOREIGN KEY (question_id) REFERENCES question_bank (id) ON DELETE CASCADE,
-
-    CONSTRAINT uq_exam_question_unique
-        UNIQUE (exam_id, question_id)
+    exam_id BIGINT NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+    question_id BIGINT NOT NULL REFERENCES question_bank(id) ON DELETE CASCADE,
+    order_index INT NOT NULL,
+    PRIMARY KEY (exam_id, question_id)
 );
 
-CREATE INDEX idx_exam_questions_exam_id ON exam_questions (exam_id);
-CREATE INDEX idx_exam_questions_exam_order ON exam_questions (exam_id, question_order);
+-- =============================================================================
+-- PHẦN V: THỰC LƯỢNG LÀM BÀI TRẮC NGHIỆM & TỰ ĐỘNG CHẤM ĐIỂM
+-- =============================================================================
 
--- BẢNG EXAM_RESULTS: Lưu kết quả thi và dữ liệu anti-cheat
-CREATE TABLE exam_results (
-    id                  BIGSERIAL       PRIMARY KEY,
-    exam_id             BIGINT          NOT NULL,
-    student_id          BIGINT          NOT NULL,
-    score               NUMERIC(5, 2)   NOT NULL DEFAULT 0.00,
-    total_correct       INTEGER         NOT NULL DEFAULT 0,
-    total_questions     INTEGER         NOT NULL DEFAULT 0,
-    answers_json        TEXT,
-    tab_switch_count    INTEGER         NOT NULL DEFAULT 0,
-    is_auto_submitted   BOOLEAN         NOT NULL DEFAULT FALSE,
-    submitted_at        TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-    started_at          TIMESTAMP,
-    created_at          TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_exam_results_exam
-        FOREIGN KEY (exam_id) REFERENCES exams (id) ON DELETE CASCADE,
-
-    CONSTRAINT fk_exam_results_student
-        FOREIGN KEY (student_id) REFERENCES users (id) ON DELETE CASCADE,
-
-    CONSTRAINT uq_exam_student_unique
-        UNIQUE (exam_id, student_id),
-
-    CONSTRAINT chk_score_range
-        CHECK (score >= 0 AND score <= 10)
+CREATE TABLE student_exams (
+    id BIGSERIAL PRIMARY KEY,
+    exam_id BIGINT NOT NULL REFERENCES exams(id) ON DELETE CASCADE,
+    student_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    start_time TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    submit_time TIMESTAMP WITH TIME ZONE,
+    score NUMERIC(5, 2) DEFAULT 0.00,
+    tab_switch_count INT DEFAULT 0 NOT NULL,
+    status VARCHAR(20) DEFAULT 'IN_PROGRESS' NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE (exam_id, student_id),
+    CONSTRAINT chk_submission_status CHECK (status IN ('IN_PROGRESS', 'SUBMITTED', 'AUTO_SUBMITTED', 'CANCELLED'))
 );
 
-CREATE INDEX idx_exam_results_exam_id ON exam_results (exam_id);
-
-CREATE INDEX idx_exam_results_student_id ON exam_results (student_id);
-
-CREATE INDEX idx_exam_results_exam_student ON exam_results (exam_id, student_id);
-
-ALTER TABLE exams ADD COLUMN IF NOT EXISTS show_answers_after_submit BOOLEAN NOT NULL DEFAULT FALSE;
-ALTER TABLE exams ADD COLUMN IF NOT EXISTS pass_score NUMERIC(5,2) NOT NULL DEFAULT 5.00;
-
--- BẢNG COURSE_ENROLLMENTS: Sinh viên đăng ký khóa học
--- Mỗi sinh viên có thể đăng ký nhiều khóa, mỗi khóa có nhiều sinh viên
-CREATE TABLE course_enrollments (
-    id              BIGSERIAL       PRIMARY KEY,
-    course_id       BIGINT          NOT NULL,
-    student_id      BIGINT          NOT NULL,
-    enrolled_at     TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_enrollments_course
-        FOREIGN KEY (course_id) REFERENCES courses (id) ON DELETE CASCADE,
-
-    CONSTRAINT fk_enrollments_student
-        FOREIGN KEY (student_id) REFERENCES users (id) ON DELETE CASCADE,
-
-    CONSTRAINT uq_enrollment_unique
-        UNIQUE (course_id, student_id)
+CREATE TABLE student_answers (
+    id BIGSERIAL PRIMARY KEY,
+    student_exam_id BIGINT NOT NULL REFERENCES student_exams(id) ON DELETE CASCADE,
+    question_id BIGINT NOT NULL REFERENCES question_bank(id),
+    is_correct BOOLEAN,
+    score_given NUMERIC(4, 2) DEFAULT 0.00,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    UNIQUE (student_exam_id, question_id)
 );
 
-CREATE INDEX idx_enrollments_student_id ON course_enrollments (student_id);
-
-CREATE INDEX idx_enrollments_course_id ON course_enrollments (course_id);
-
-CREATE TYPE material_type AS ENUM ('VIDEO', 'DOCUMENT_URL', 'FILE_UPLOAD');
-
--- BẢNG LESSON_MATERIALS: Tài liệu đính kèm bài học
--- Mỗi bài học có thể có nhiều tài liệu (video, PDF, link...)
-CREATE TABLE lesson_materials (
-    id              BIGSERIAL       PRIMARY KEY,
-    lesson_id       BIGINT          NOT NULL,
-    material_type   material_type   NOT NULL,
-    material_title  VARCHAR(255)    NOT NULL,
-    material_url    VARCHAR(1000)   NOT NULL,
-    description     TEXT,
-    order_index     INTEGER         NOT NULL DEFAULT 0,
-    created_at      TIMESTAMP       NOT NULL DEFAULT CURRENT_TIMESTAMP,
-
-    CONSTRAINT fk_materials_lesson
-        FOREIGN KEY (lesson_id) REFERENCES lessons (id) ON DELETE CASCADE
+CREATE TABLE student_answer_options (
+    student_answer_id BIGINT NOT NULL REFERENCES student_answers(id) ON DELETE CASCADE,
+    option_id BIGINT NOT NULL REFERENCES question_options(id) ON DELETE CASCADE,
+    PRIMARY KEY (student_answer_id, option_id)
 );
 
-CREATE INDEX idx_materials_lesson_id ON lesson_materials (lesson_id);
+-- =============================================================================
+-- PHẦN VI: PHÂN HỆ BÀI TẬP UML & ĐÁNH GIÁ HỖ TRỢ BỞI AI/LLM
+-- =============================================================================
 
-CREATE INDEX idx_materials_lesson_order ON lesson_materials (lesson_id, order_index);
+CREATE TABLE uml_assignments (
+    id BIGSERIAL PRIMARY KEY,
+    subject_id BIGINT NOT NULL REFERENCES subjects(id) ON DELETE CASCADE,
+    created_by BIGINT NOT NULL REFERENCES users(id),
+    title VARCHAR(200) NOT NULL,
+    description TEXT NOT NULL,
+    rubric_criteria TEXT,
+    max_score NUMERIC(5, 2) DEFAULT 10.00 NOT NULL CHECK (max_score > 0),
+    due_date TIMESTAMP WITH TIME ZONE NOT NULL,
+    created_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL
+);
 
+CREATE TABLE uml_submissions (
+    id BIGSERIAL PRIMARY KEY,
+    assignment_id BIGINT NOT NULL REFERENCES uml_assignments(id) ON DELETE CASCADE,
+    student_id BIGINT NOT NULL REFERENCES users(id) ON DELETE CASCADE,
+    file_url VARCHAR(500) NOT NULL,
+    file_type VARCHAR(20) NOT NULL,
+    submitted_at TIMESTAMP WITH TIME ZONE DEFAULT CURRENT_TIMESTAMP NOT NULL,
+    ai_suggested_score NUMERIC(5, 2),
+    ai_feedback TEXT,
+    ai_analyzed_at TIMESTAMP WITH TIME ZONE,
+    final_score NUMERIC(5, 2),
+    teacher_feedback TEXT,
+    graded_by BIGINT REFERENCES users(id),
+    graded_at TIMESTAMP WITH TIME ZONE,
+    status VARCHAR(30) DEFAULT 'SUBMITTED' NOT NULL,
+    CONSTRAINT chk_uml_status CHECK (status IN ('SUBMITTED', 'AI_ANALYZED', 'GRADED', 'LATE')),
+    CONSTRAINT chk_file_type CHECK (file_type IN ('IMAGE', 'PDF')),
+    UNIQUE (assignment_id, student_id)
+);
+
+-- =============================================================================
+-- PHẦN VII: TỐI ƯU HÓA TRUY VẤN (INDEXES FOR HIGH PERFORMANCE)
+-- =============================================================================
+
+CREATE INDEX idx_users_username ON users(username);
+CREATE INDEX idx_users_email ON users(email);
+CREATE INDEX idx_subjects_course ON subjects(course_id);
+CREATE INDEX idx_lessons_subject ON lessons(subject_id);
+CREATE INDEX idx_question_bank_filter ON question_bank(subject_id, chapter_topic, difficulty);
+CREATE INDEX idx_student_exams_lookup ON student_exams(exam_id, student_id);
+CREATE INDEX idx_student_exams_status ON student_exams(status);
+CREATE INDEX idx_student_answers_lookup ON student_answers(student_exam_id, question_id);
+CREATE INDEX idx_uml_assignments_subject ON uml_assignments(subject_id);
+CREATE INDEX idx_uml_submissions_lookup ON uml_submissions(assignment_id, student_id);
+CREATE INDEX idx_uml_submissions_status ON uml_submissions(status);

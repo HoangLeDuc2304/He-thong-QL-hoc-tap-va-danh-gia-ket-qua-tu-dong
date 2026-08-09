@@ -16,31 +16,29 @@ import lombok.NoArgsConstructor;
 import lombok.Setter;
 
 /**
- * Khóa học / Chương trình học tổng thể.
+ * Lựa chọn đáp án cho câu hỏi (không giới hạn số lượng).
  */
 @Entity
-@Table(name = "courses")
+@Table(name = "question_options")
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Course extends BaseEntity {
+public class QuestionOption {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", nullable = false, unique = true, length = 30)
-    private String code;
-
-    @Column(name = "title", nullable = false, length = 200)
-    private String title;
-
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
-
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    @JoinColumn(name = "question_id", nullable = false)
+    private Question question;
+
+    @Column(name = "content", nullable = false, columnDefinition = "TEXT")
+    private String content;
+
+    @Column(name = "is_correct", nullable = false)
+    @Builder.Default
+    private Boolean isCorrect = false;
 }

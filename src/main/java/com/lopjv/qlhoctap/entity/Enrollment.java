@@ -9,38 +9,42 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.Table;
+import jakarta.persistence.UniqueConstraint;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 
+import java.time.OffsetDateTime;
+
 /**
- * Khóa học / Chương trình học tổng thể.
+ * Ghi danh sinh viên vào khóa học.
  */
 @Entity
-@Table(name = "courses")
+@Table(name = "enrollments", uniqueConstraints = {
+        @UniqueConstraint(columnNames = {"course_id", "student_id"})
+})
 @Getter
 @Setter
 @NoArgsConstructor
 @AllArgsConstructor
 @Builder
-public class Course extends BaseEntity {
+public class Enrollment {
 
     @Id
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    @Column(name = "code", nullable = false, unique = true, length = 30)
-    private String code;
-
-    @Column(name = "title", nullable = false, length = 200)
-    private String title;
-
-    @Column(name = "description", columnDefinition = "TEXT")
-    private String description;
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "course_id", nullable = false)
+    private Course course;
 
     @ManyToOne(fetch = FetchType.LAZY)
-    @JoinColumn(name = "created_by", nullable = false)
-    private User createdBy;
+    @JoinColumn(name = "student_id", nullable = false)
+    private User student;
+
+    @Column(name = "enrolled_at", nullable = false)
+    @Builder.Default
+    private OffsetDateTime enrolledAt = OffsetDateTime.now();
 }
