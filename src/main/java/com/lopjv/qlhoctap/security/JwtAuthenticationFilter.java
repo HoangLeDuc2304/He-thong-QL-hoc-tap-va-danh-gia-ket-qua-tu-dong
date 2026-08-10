@@ -48,21 +48,21 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
                 UserDetails userDetails = customUserDetailsService.loadUserByUsername(username);
 
-                UsernamePasswordAuthenticationToken authentication =
+                UsernamePasswordAuthenticationToken authenticationToken =
                         new UsernamePasswordAuthenticationToken(
                                 userDetails,
                                 null,
                                 userDetails.getAuthorities()
                         );
 
-                authentication.setDetails(
+                authenticationToken.setDetails(
                         new WebAuthenticationDetailsSource().buildDetails(request)
                 );
 
-                SecurityContextHolder.getContext().setAuthentication(authentication);
+                SecurityContextHolder.getContext().setAuthentication(authenticationToken);
             }
         } catch (Exception exception) {
-            logger.error("Không thể thiết lập xác thực người dùng: {}", exception.getMessage());
+            logger.error("Không thể thiết lập xác thực người dùng trong SecurityContext: {}", exception.getMessage());
         }
 
         filterChain.doFilter(request, response);

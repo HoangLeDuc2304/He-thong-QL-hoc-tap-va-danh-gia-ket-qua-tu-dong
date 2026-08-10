@@ -7,13 +7,11 @@ import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.core.userdetails.UserDetailsService;
 import org.springframework.security.core.userdetails.UsernameNotFoundException;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.List;
 import java.util.stream.Collectors;
 
-/**
- * Load user từ bảng users + user_roles + roles (qua @ManyToMany).
- */
 @Service
 public class CustomUserDetailsService implements UserDetailsService {
 
@@ -24,9 +22,10 @@ public class CustomUserDetailsService implements UserDetailsService {
     }
 
     @Override
+    @Transactional(readOnly = true)
     public UserDetails loadUserByUsername(String username) throws UsernameNotFoundException {
         User user = userRepository.findByUsername(username)
-                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy user: " + username));
+                .orElseThrow(() -> new UsernameNotFoundException("Không tìm thấy tài khoản người dùng với username: " + username));
 
         List<SimpleGrantedAuthority> authorities = user.getRoles().stream()
                 .map(role -> new SimpleGrantedAuthority(role.getName()))
@@ -36,7 +35,9 @@ public class CustomUserDetailsService implements UserDetailsService {
                 user.getUsername(),
                 user.getPassword(),
                 user.getIsActive(),
-                true, true, true,
+                true,
+                true,
+                true,
                 authorities
         );
     }

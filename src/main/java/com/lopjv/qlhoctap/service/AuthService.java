@@ -1,7 +1,7 @@
 package com.lopjv.qlhoctap.service;
 
+import com.lopjv.qlhoctap.dto.JwtAuthResponse;
 import com.lopjv.qlhoctap.dto.LoginRequest;
-import com.lopjv.qlhoctap.dto.LoginResponse;
 import com.lopjv.qlhoctap.dto.RegisterRequest;
 import com.lopjv.qlhoctap.entity.Role;
 import com.lopjv.qlhoctap.entity.User;
@@ -11,15 +11,16 @@ import com.lopjv.qlhoctap.security.JwtTokenProvider;
 import org.springframework.security.authentication.AuthenticationManager;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
+import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+import java.util.List;
 import java.util.Set;
+import java.util.stream.Collectors;
 
-/**
- * Xử lý đăng nhập và đăng ký.
- */
 @Service
 public class AuthService {
 
@@ -42,7 +43,7 @@ public class AuthService {
         this.passwordEncoder = passwordEncoder;
     }
 
-    public LoginResponse login(LoginRequest loginRequest) {
+    public JwtAuthResponse login(LoginRequest loginRequest) {
         Authentication authentication = authenticationManager.authenticate(
                 new UsernamePasswordAuthenticationToken(
                         loginRequest.getUsername(),
@@ -50,25 +51,32 @@ public class AuthService {
                 )
         );
 
-        String token = jwtTokenProvider.generateToken(authentication);
+        String accessToken = jwtTokenProvider.generateToken(authentication);
 
-        return LoginResponse.builder()
-                .token(token)
-                .username(loginRequest.getUsername())
+        UserDetails userDetails = (UserDetails) authentication.getPrincipal();
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
+
+        return JwtAuthResponse.builder()
+                .accessToken(accessToken)
+                .tokenType("Bearer")
+                .username(userDetails.getUsername())
+                .roles(roles)
                 .build();
     }
 
     @Transactional
     public void register(RegisterRequest registerRequest) {
         if (userRepository.existsByUsername(registerRequest.getUsername())) {
-            throw new RuntimeException("Username đã tồn tại: " + registerRequest.getUsername());
+            throw new RuntimeException("Tên đăng nhập đã tồn tại trong hệ thống: " + registerRequest.getUsername());
         }
         if (userRepository.existsByEmail(registerRequest.getEmail())) {
-            throw new RuntimeException("Email đã tồn tại: " + registerRequest.getEmail());
+            throw new RuntimeException("Địa chỉ Email đã tồn tại trong hệ thống: " + registerRequest.getEmail());
         }
 
         Role studentRole = roleRepository.findByName("ROLE_STUDENT")
-                .orElseThrow(() -> new RuntimeException("Không tìm thấy role ROLE_STUDENT"));
+                .orElseThrow(() -> new RuntimeException("Không tìm thấy vai trò ROLE_STUDENT trong hệ thống"));
 
         User user = User.builder()
                 .username(registerRequest.getUsername())
@@ -78,6 +86,7 @@ public class AuthService {
                 .isActive(true)
                 .roles(Set.of(studentRole))
                 .build();
+
         userRepository.save(user);
     }
 }

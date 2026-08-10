@@ -32,6 +32,9 @@ dependencies {
     // Apache POI - Đọc/ghi file Excel (.xlsx) để import câu hỏi
     implementation 'org.apache.poi:poi-ooxml:5.3.0'
 
+    // Jackson Databind - Xử lý JSON cho AI API
+    implementation 'com.fasterxml.jackson.core:jackson-databind'
+
     compileOnly 'org.projectlombok:lombok'
     developmentOnly 'org.springframework.boot:spring-boot-devtools'
     runtimeOnly 'org.postgresql:postgresql'

@@ -12,11 +12,14 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.security.core.Authentication;
+import org.springframework.security.core.GrantedAuthority;
 import org.springframework.security.core.userdetails.UserDetails;
 import org.springframework.stereotype.Component;
 
 import javax.crypto.SecretKey;
 import java.util.Date;
+import java.util.List;
+import java.util.stream.Collectors;
 
 @Component
 public class JwtTokenProvider {
@@ -38,14 +41,13 @@ public class JwtTokenProvider {
         Date now = new Date();
         Date expiryDate = new Date(now.getTime() + jwtExpirationMs);
 
-        String role = userDetails.getAuthorities().stream()
-                .findFirst()
-                .map(authority -> authority.getAuthority().replace("ROLE_", ""))
-                .orElse("STUDENT");
+        List<String> roles = userDetails.getAuthorities().stream()
+                .map(GrantedAuthority::getAuthority)
+                .collect(Collectors.toList());
 
         return Jwts.builder()
                 .subject(userDetails.getUsername())
-                .claim("role", role)
+                .claim("roles", roles)
                 .issuedAt(now)
                 .expiration(expiryDate)
                 .signWith(secretKey)
@@ -57,9 +59,10 @@ public class JwtTokenProvider {
         return claims.getSubject();
     }
 
-    public String getRoleFromToken(String token) {
+    @SuppressWarnings("unchecked")
+    public List<String> getRolesFromToken(String token) {
         Claims claims = parseClaimsFromToken(token);
-        return claims.get("role", String.class);
+        return claims.get("roles", List.class);
     }
 
     public boolean validateToken(String token) {
@@ -78,7 +81,7 @@ public class JwtTokenProvider {
         } catch (UnsupportedJwtException exception) {
             logger.error("Token JWT không được hỗ trợ: {}", exception.getMessage());
         } catch (IllegalArgumentException exception) {
-            logger.error("Chuỗi claims JWT rỗng: {}", exception.getMessage());
+            logger.error("Chuỗi claims JWT bị rỗng hoặc null: {}", exception.getMessage());
         }
         return false;
     }

@@ -2,6 +2,7 @@ package com.lopjv.qlhoctap.dto;
 
 import jakarta.validation.constraints.Email;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.Pattern;
 import jakarta.validation.constraints.Size;
 import lombok.AllArgsConstructor;
 import lombok.Getter;
@@ -22,10 +23,14 @@ public class RegisterRequest {
     private String fullName;
 
     @NotBlank(message = "Email không được để trống")
-    @Email(message = "Email không đúng định dạng")
+    @Email(regexp = "^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\\.[a-zA-Z]{2,6}$", message = "Email không đúng định dạng (Ví dụ hợp lệ: name@domain.com)")
     private String email;
 
     @NotBlank(message = "Mật khẩu không được để trống")
-    @Size(min = 6, max = 100, message = "Mật khẩu phải từ 6 đến 100 ký tự")
+    @Size(min = 8, max = 100, message = "Mật khẩu phải từ 8 đến 100 ký tự")
+    @Pattern(
+            regexp = "^(?=.*[A-Z])(?=.*[0-9])(?=.*[!@#$%^&*()_+\\-=\\[\\]{};':\"\\\\|,.<>\\/?]).{8,}$",
+            message = "Mật khẩu phải chứa ít nhất 1 chữ hoa, 1 chữ số và 1 ký tự đặc biệt"
+    )
     private String password;
 }

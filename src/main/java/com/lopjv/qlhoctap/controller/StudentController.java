@@ -9,9 +9,10 @@ import java.util.Map;
 
 /**
  * Controller API dành cho Sinh viên.
+ * Yêu cầu vai trò STUDENT hoặc ADMIN.
  */
 @RestController
-@RequestMapping("/api/student")
+@RequestMapping("/api/v1/student")
 public class StudentController {
 
     @GetMapping("/ping")

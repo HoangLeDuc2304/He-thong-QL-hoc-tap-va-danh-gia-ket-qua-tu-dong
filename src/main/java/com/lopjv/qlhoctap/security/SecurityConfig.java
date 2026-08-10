@@ -14,6 +14,11 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+
+import java.util.List;
 
 @Configuration
 @EnableWebSecurity
@@ -36,44 +41,62 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity httpSecurity) throws Exception {
         httpSecurity
-                // Tắt CSRF vì ứng dụng dùng JWT (stateless), không dùng cookie session
+                // Vô hiệu hóa CSRF do sử dụng xác thực qua JWT Stateless
                 .csrf(AbstractHttpConfigurer::disable)
 
-                // Xử lý lỗi xác thực (trả về 401 khi không có hoặc token không hợp lệ)
+                // Cấu hình CORS cho phép ứng dụng Frontend gọi API
+                .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+
+                // Xử lý ngoại lệ xác thực không hợp lệ (trả về HTTP 401 Unauthorized JSON)
                 .exceptionHandling(exception -> exception
                         .authenticationEntryPoint(jwtAuthenticationEntryPoint)
                 )
 
-                // Cấu hình session: STATELESS — không tạo HttpSession
+                // Quản lý Session phía Server theo chế độ STATELESS
                 .sessionManagement(session -> session
                         .sessionCreationPolicy(SessionCreationPolicy.STATELESS)
                 )
 
-                // Cấu hình phân quyền theo URL pattern
+                // Cấu hình Phân quyền chi tiết (Role-based Authorization)
                 .authorizeHttpRequests(authorize -> authorize
-                        // Cho phép tất cả truy cập các API xác thực (đăng nhập, đăng ký)
-                        .requestMatchers("/api/auth/**").permitAll()
+                        // Các API xác thực không yêu cầu Token
+                        .requestMatchers("/api/v1/auth/**").permitAll()
 
-                        // Chỉ ADMIN mới được truy cập các API quản trị
-                        .requestMatchers("/api/admin/**").hasRole("ADMIN")
+                        // Chỉ dành cho vai trò ADMIN
+                        .requestMatchers("/api/v1/admin/**").hasRole("ADMIN")
 
-                        // Chỉ TEACHER mới được truy cập các API dành cho giáo viên
-                        .requestMatchers("/api/teacher/**").hasRole("TEACHER")
+                        // Dành cho TEACHER hoặc ADMIN
+                        .requestMatchers("/api/v1/teacher/**").hasAnyRole("TEACHER", "ADMIN")
 
-                        // Chỉ STUDENT mới được truy cập các API dành cho sinh viên
-                        .requestMatchers("/api/student/**").hasRole("STUDENT")
+                        // Dành cho STUDENT hoặc ADMIN
+                        .requestMatchers("/api/v1/student/**").hasAnyRole("STUDENT", "ADMIN")
 
-                        // Tất cả các request còn lại đều yêu cầu xác thực
+                        // Các request khác bắt buộc phải đăng nhập
                         .anyRequest().authenticated()
                 )
 
-                // Cấu hình AuthenticationProvider sử dụng CustomUserDetailsService
+                // Cấu hình AuthenticationProvider với CustomUserDetailsService & BCrypt
                 .authenticationProvider(daoAuthenticationProvider())
 
-                // Thêm JwtAuthenticationFilter vào trước UsernamePasswordAuthenticationFilter
+                // Đăng ký JwtAuthenticationFilter trước UsernamePasswordAuthenticationFilter
                 .addFilterBefore(jwtAuthenticationFilter, UsernamePasswordAuthenticationFilter.class);
 
         return httpSecurity.build();
+    }
+
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration corsConfiguration = new CorsConfiguration();
+        corsConfiguration.setAllowedOrigins(List.of("http://localhost:3000", "http://localhost:5173"));
+        corsConfiguration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"));
+        corsConfiguration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Accept"));
+        corsConfiguration.setExposedHeaders(List.of("Authorization"));
+        corsConfiguration.setAllowCredentials(true);
+        corsConfiguration.setMaxAge(3600L);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/api/**", corsConfiguration);
+        return source;
     }
 
     @Bean
