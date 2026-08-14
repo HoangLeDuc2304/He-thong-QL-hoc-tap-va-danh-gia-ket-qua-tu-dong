@@ -48,12 +48,9 @@ public class QuestionImportService {
     }
 
     @Transactional
-    public QuestionImportResultDto importQuestionsFromExcel(MultipartFile file, Long subjectId, Long createdById) {
+    public QuestionImportResultDto importQuestionsFromExcel(MultipartFile file, Long subjectId, User createdBy) {
         Subject subject = subjectRepository.findById(subjectId)
                 .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy môn học với ID: " + subjectId));
-
-        User createdBy = userRepository.findById(createdById)
-                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy giảng viên với ID: " + createdById));
 
         if (file.isEmpty()) {
             throw new IllegalArgumentException("File Excel tải lên bị rỗng!");

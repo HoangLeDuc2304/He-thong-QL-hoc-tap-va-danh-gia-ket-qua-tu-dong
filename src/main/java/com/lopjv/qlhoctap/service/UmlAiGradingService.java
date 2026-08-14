@@ -40,10 +40,10 @@ public class UmlAiGradingService {
     @Value("${application.ai.api-url:https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent}")
     private String aiApiUrl;
 
-    public UmlAiGradingService(UmlSubmissionRepository umlSubmissionRepository) {
+    public UmlAiGradingService(UmlSubmissionRepository umlSubmissionRepository, RestTemplate restTemplate) {
         this.umlSubmissionRepository = umlSubmissionRepository;
         this.objectMapper = new ObjectMapper();
-        this.restTemplate = new RestTemplate();
+        this.restTemplate = restTemplate;
     }
 
     @Transactional

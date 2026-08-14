@@ -67,6 +67,59 @@ public class AssessmentService {
         this.studentAnswerOptionRepository = studentAnswerOptionRepository;
     }
 
+    /**
+     * Sinh viên bắt đầu làm bài thi — tạo bản ghi StudentExam.
+     * Kiểm tra: đề thi đã PUBLISHED, trong thời gian thi, chưa thi lần nào.
+     */
+    @Transactional
+    public StudentExam startExam(Long examId, User student) {
+        Exam exam = examRepository.findById(examId)
+                .orElseThrow(() -> new ResourceNotFoundException("Không tìm thấy đề thi với ID: " + examId));
+
+        if (!"PUBLISHED".equals(exam.getStatus())) {
+            throw new IllegalArgumentException("Đề thi chưa được mở hoặc đã kết thúc.");
+        }
+
+        OffsetDateTime now = OffsetDateTime.now();
+        if (now.isBefore(exam.getStartTime())) {
+            throw new IllegalArgumentException("Chưa đến thời gian thi. Bắt đầu lúc: " + exam.getStartTime());
+        }
+        if (now.isAfter(exam.getEndTime())) {
+            throw new IllegalArgumentException("Đề thi đã hết thời gian.");
+        }
+
+        // Kiểm tra sinh viên chưa thi lần nào
+        studentExamRepository.findByExamIdAndStudentId(examId, student.getId())
+                .ifPresent(existing -> {
+                    throw new IllegalArgumentException("Bạn đã vào phòng thi này rồi.");
+                });
+
+        StudentExam studentExam = StudentExam.builder()
+                .exam(exam)
+                .student(student)
+                .startTime(now)
+                .status("IN_PROGRESS")
+                .build();
+
+        return studentExamRepository.save(studentExam);
+    }
+
+    /**
+     * Ghi nhận sự kiện chuyển tab của sinh viên (chống gian lận).
+     */
+    @Transactional
+    public StudentExam recordTabSwitch(Long examId, User student) {
+        StudentExam studentExam = studentExamRepository.findByExamIdAndStudentId(examId, student.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Bạn chưa vào phòng thi này."));
+
+        if (!"IN_PROGRESS".equals(studentExam.getStatus())) {
+            throw new IllegalArgumentException("Bài thi đã kết thúc, không thể ghi nhận thêm.");
+        }
+
+        studentExam.setTabSwitchCount(studentExam.getTabSwitchCount() + 1);
+        return studentExamRepository.save(studentExam);
+    }
+
     @Transactional
     public ExamResultResponseDto submitAndGradeExam(SubmitExamRequestDto requestDto) {
         Exam exam = examRepository.findById(requestDto.getExamId())
@@ -128,7 +181,7 @@ public class AssessmentService {
         int correctCount = 0;
 
         List<StudentAnswer> studentAnswersToSave = new ArrayList<>();
-        Map<StudentAnswer, List<QuestionOption>> answerOptionsToSaveMap = new java.util.HashMap<>();
+        Map<Long, List<QuestionOption>> answerOptionsToSaveMap = new java.util.HashMap<>();
 
         for (ExamQuestion eq : examQuestions) {
             Question question = eq.getQuestion();
@@ -179,7 +232,7 @@ public class AssessmentService {
                     .filter(Objects::nonNull)
                     .collect(Collectors.toList());
 
-            answerOptionsToSaveMap.put(studentAnswer, selectedQuestionOptions);
+            answerOptionsToSaveMap.put(questionId, selectedQuestionOptions);
         }
 
         // 5. Lưu điểm tổng cộng vào phiếu làm bài student_exams
@@ -194,7 +247,7 @@ public class AssessmentService {
         List<StudentAnswer> savedAnswers = studentAnswerRepository.saveAll(studentAnswersToSave);
 
         for (StudentAnswer savedAnswer : savedAnswers) {
-            List<QuestionOption> selectedOptions = answerOptionsToSaveMap.get(savedAnswer);
+            List<QuestionOption> selectedOptions = answerOptionsToSaveMap.get(savedAnswer.getQuestion().getId());
             if (selectedOptions != null && !selectedOptions.isEmpty()) {
                 for (QuestionOption option : selectedOptions) {
                     StudentAnswerOption.StudentAnswerOptionId optionId =

@@ -9,4 +9,5 @@ import java.util.List;
 public interface QuestionOptionRepository extends JpaRepository<QuestionOption, Long> {
     List<QuestionOption> findByQuestionId(Long questionId);
     List<QuestionOption> findByQuestionIdAndIsCorrectTrue(Long questionId);
+    void deleteByQuestionId(Long questionId);
 }
