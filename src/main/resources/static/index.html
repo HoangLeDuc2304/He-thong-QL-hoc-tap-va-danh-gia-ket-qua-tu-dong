@@ -1,0 +1,75 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Đăng nhập - QL học tập</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="login">
+<section class="auth-screen">
+    <div class="auth-intro">
+        <div class="brand auth-brand">
+            <div class="brand-mark">QL</div>
+            <div>
+                <strong>QL Học Tập</strong>
+                <span>Đánh giá kết quả học tập tự động</span>
+            </div>
+        </div>
+        <h1>Hệ thống quản lý học tập và đánh giá tự động</h1>
+        <p>Đăng nhập theo vai trò để giảng viên quản lý câu hỏi, bài kiểm tra; học sinh theo dõi khóa học, làm bài và xem kết quả.</p>
+        <div class="auth-highlights">
+            <span>Quản lý khóa học</span>
+            <span>Ngân hàng câu hỏi</span>
+            <span>Chấm điểm tự động</span>
+        </div>
+    </div>
+
+    <div class="auth-card">
+        <div class="auth-tabs">
+            <button class="auth-tab active" id="loginTab" type="button">Đăng nhập</button>
+            <button class="auth-tab" id="registerTab" type="button">Đăng ký</button>
+        </div>
+
+        <form class="auth-form" id="loginForm">
+            <label class="field">
+                <span>Email</span>
+                <input id="loginEmail" type="email" value="gv@demo.vn" required>
+            </label>
+            <label class="field">
+                <span>Mật khẩu</span>
+                <input id="loginPassword" type="password" value="123456" required>
+            </label>
+            <button class="btn primary" type="submit">Đăng nhập</button>
+            <p class="hint">Tài khoản mẫu: gv@demo.vn / hs@demo.vn, mật khẩu 123456.</p>
+        </form>
+
+        <form class="auth-form" id="registerForm" hidden>
+            <label class="field">
+                <span>Họ và tên</span>
+                <input id="registerName" type="text" placeholder="Nhập họ tên" required>
+            </label>
+            <label class="field">
+                <span>Email</span>
+                <input id="registerEmail" type="email" placeholder="email@domain.com" required>
+            </label>
+            <label class="field">
+                <span>Mật khẩu</span>
+                <input id="registerPassword" type="password" minlength="6" placeholder="Tối thiểu 6 ký tự" required>
+            </label>
+            <label class="field">
+                <span>Vai trò</span>
+                <select id="registerRole" required>
+                    <option value="teacher">Giảng viên</option>
+                    <option value="student">Học sinh</option>
+                </select>
+            </label>
+            <button class="btn primary" type="submit">Tạo tài khoản</button>
+        </form>
+    </div>
+</section>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js?v=20260815-tabs"></script>
+</body>
+</html>

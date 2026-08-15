@@ -1,0 +1,380 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Giảng viên - QL học tập</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="teacher">
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">QL</div>
+            <div>
+                <strong>QL Học Tập</strong>
+                <span>Đánh giá tự động</span>
+            </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Chức năng giảng viên">
+            <a href="#" class="nav-item" data-target="overview">Tổng quan</a>
+            <a href="#" class="nav-item" data-target="courses">Khóa học</a>
+            <a href="#" class="nav-item active" data-target="questionBank">Ngân hàng câu hỏi</a>
+            <a href="#" class="nav-item" data-target="tests">Bài kiểm tra</a>
+            <a href="#" class="nav-item" data-target="results">Kết quả học tập</a>
+            <a href="#" class="nav-item" data-target="reports">Báo cáo</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Khu vực giảng viên</p>
+                <h1>Ngân hàng câu hỏi</h1>
+            </div>
+            <div class="topbar-actions">
+                <div class="user-chip">
+                    <span class="avatar">GV</span>
+                    <span id="teacherName">Giảng viên</span>
+                </div>
+                <button class="btn secondary compact" id="logoutBtn" type="button">Đăng xuất</button>
+            </div>
+        </header>
+
+        <!-- Sections: overview, courses, questionBank, tests, results, reports -->
+        <div id="section-overview" class="section-content" hidden>
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Tổng quan</h2>
+                        <p>Thông tin tổng quan về lớp, tiến độ và thống kê.</p>
+                    </div>
+                </div>
+                <div class="section-body pad">
+                    <div class="overview-grid" id="overviewGrid"></div>
+                    <div class="mini-list-panel">
+                        <h3>Thông báo gần đây</h3>
+                        <div class="mini-list" id="overviewNotifications"></div>
+                    </div>
+                </div>
+            </section>
+        </div>
+
+        <div id="section-courses" class="section-content" hidden>
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Khóa học</h2>
+                        <p>Danh sách khóa học do giảng viên quản lý.</p>
+                    </div>
+                </div>
+                <div class="section-body pad">
+                    <div class="course-grid" id="teacherCourseGrid"></div>
+                </div>
+            </section>
+        </div>
+
+        <div id="section-questionBank" class="section-content">
+            <section class="panel">
+            <div class="stats-grid stats-grid-question-bank" aria-label="Thống kê nhanh">
+                <article class="stat-card">
+                    <span>Tổng câu hỏi</span>
+                    <strong id="totalQuestions">0</strong>
+                </article>
+                <article class="stat-card">
+                    <span>Chương học</span>
+                    <strong>5</strong>
+                </article>
+                <article class="stat-card">
+                    <span>Bài kiểm tra</span>
+                    <strong>8</strong>
+                </article>
+                <article class="stat-card">
+                    <span>Đã chấm tự động</span>
+                    <strong>126</strong>
+                </article>
+            </div>
+            <div class="panel-header">
+                <div>
+                    <h2>Question Bank</h2>
+                    <p>Quản lý câu hỏi, 4 lựa chọn A/B/C/D và đáp án đúng.</p>
+                </div>
+                <div class="actions">
+                    <button class="btn secondary" id="importBtn" type="button">Import Excel</button>
+                    <button class="btn primary" id="addBtn" type="button">Thêm câu hỏi</button>
+                </div>
+            </div>
+
+            <div class="toolbar">
+                <label class="field search-field">
+                    <span>Tìm kiếm</span>
+                    <input id="searchInput" type="search" placeholder="Nhập nội dung câu hỏi hoặc đáp án...">
+                </label>
+                <label class="field">
+                    <span>Độ khó</span>
+                    <select id="difficultyFilter">
+                        <option value="">Tất cả</option>
+                        <option value="Dễ">Dễ</option>
+                        <option value="Trung bình">Trung bình</option>
+                        <option value="Khó">Khó</option>
+                    </select>
+                </label>
+                <label class="field">
+                    <span>Chương</span>
+                    <select id="chapterFilter">
+                        <option value="">Tất cả</option>
+                        <option value="Chương 1">Chương 1</option>
+                        <option value="Chương 2">Chương 2</option>
+                        <option value="Chương 3">Chương 3</option>
+                        <option value="Chương 4">Chương 4</option>
+                        <option value="Chương 5">Chương 5</option>
+                    </select>
+                </label>
+            </div>
+
+                <div class="table-wrap">
+                    <table>
+                        <thead>
+                        <tr>
+                            <th>Câu hỏi</th>
+                            <th>Lựa chọn A/B/C/D</th>
+                            <th>Đáp án đúng</th>
+                            <th>Độ khó</th>
+                            <th>Chương</th>
+                            <th>Thao tác</th>
+                        </tr>
+                        </thead>
+                        <tbody id="questionTable"></tbody>
+                    </table>
+                    <div class="empty-state" id="emptyState" hidden>Không tìm thấy câu hỏi phù hợp.</div>
+                    <div class="pagination" id="pagination" aria-label="Phân trang"></div>
+                </div>
+            </section>
+        </div>
+
+        <div id="section-tests" class="section-content" hidden>
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Bài kiểm tra</h2>
+                        <p>Quản lý đề thi, lịch thi và cấu hình.</p>
+                    </div>
+                    <div class="actions">
+                        <button class="btn secondary" id="createQuizBtn" type="button">Tạo bài trắc nghiệm</button>
+                        <button class="btn primary" id="createAssignmentBtn" type="button">Tạo bài UML</button>
+                    </div>
+                </div>
+                <div class="section-body pad">
+                    <div class="test-list" id="teacherTestList"></div>
+                </div>
+            </section>
+        </div>
+
+        <div id="section-results" class="section-content" hidden>
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Kết quả học tập</h2>
+                        <p>Xem kết quả, điểm và phân tích.</p>
+                    </div>
+                </div>
+                <div class="section-body pad">
+                    <table class="summary-table">
+                        <thead>
+                        <tr>
+                            <th>Lớp</th>
+                            <th>Số sinh viên</th>
+                            <th>Điểm TB</th>
+                            <th>Đạt</th>
+                            <th>Chưa đạt</th>
+                        </tr>
+                        </thead>
+                        <tbody id="teacherResultTable"></tbody>
+                    </table>
+                </div>
+            </section>
+        </div>
+
+        <div id="section-reports" class="section-content" hidden>
+            <section class="panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Báo cáo</h2>
+                        <p>Tạo và xem báo cáo học tập.</p>
+                    </div>
+                </div>
+                <div class="section-body pad">
+                    <div class="report-list" id="teacherReportList"></div>
+                </div>
+            </section>
+        </div>
+    </main>
+</div>
+
+<dialog class="modal" id="questionModal">
+    <form method="dialog" class="modal-content" id="questionForm">
+        <div class="modal-header">
+            <h2 id="modalTitle">Thêm câu hỏi</h2>
+            <button class="icon-btn" type="button" id="closeModal" aria-label="Đóng">x</button>
+        </div>
+
+        <label class="field">
+            <span>Nội dung câu hỏi</span>
+            <textarea id="questionText" rows="4" required></textarea>
+        </label>
+
+        <div class="option-grid">
+            <label class="field">
+                <span>Đáp án A</span>
+                <input id="optionA" type="text" required placeholder="Nhập nội dung đáp án A">
+            </label>
+            <label class="field">
+                <span>Đáp án B</span>
+                <input id="optionB" type="text" required placeholder="Nhập nội dung đáp án B">
+            </label>
+            <label class="field">
+                <span>Đáp án C</span>
+                <input id="optionC" type="text" required placeholder="Nhập nội dung đáp án C">
+            </label>
+            <label class="field">
+                <span>Đáp án D</span>
+                <input id="optionD" type="text" required placeholder="Nhập nội dung đáp án D">
+            </label>
+        </div>
+
+        <div class="form-grid">
+            <label class="field">
+                <span>Đáp án đúng</span>
+                <select id="correctAnswer" required>
+                    <option value="A">A</option>
+                    <option value="B">B</option>
+                    <option value="C">C</option>
+                    <option value="D">D</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Độ khó</span>
+                <select id="questionDifficulty" required>
+                    <option value="Dễ">Dễ</option>
+                    <option value="Trung bình">Trung bình</option>
+                    <option value="Khó">Khó</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Chương</span>
+                <select id="questionChapter" required>
+                    <option value="Chương 1">Chương 1</option>
+                    <option value="Chương 2">Chương 2</option>
+                    <option value="Chương 3">Chương 3</option>
+                    <option value="Chương 4">Chương 4</option>
+                    <option value="Chương 5">Chương 5</option>
+                </select>
+            </label>
+        </div>
+
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="cancelBtn">Hủy</button>
+            <button class="btn primary" type="submit">Lưu</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Create Assignment Modal -->
+<dialog class="modal" id="createAssignmentModal">
+    <form method="dialog" class="modal-content" id="createAssignmentForm">
+        <div class="modal-header">
+            <h2>Tạo bài UML</h2>
+            <button class="icon-btn" type="button" id="closeCreateAssignment" aria-label="Đóng">x</button>
+        </div>
+        <label class="field">
+            <span>Tiêu đề</span>
+            <input id="assignTitle" required />
+        </label>
+        <label class="field">
+            <span>Mô tả</span>
+            <textarea id="assignDesc" rows="3"></textarea>
+        </label>
+        <label class="field">
+            <span>Hạn nộp</span>
+            <input id="assignDue" type="date" />
+        </label>
+        <label class="field">
+            <span>Thang điểm</span>
+            <input id="assignMax" type="number" value="10" min="1" />
+        </label>
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="cancelCreateAssign">Hủy</button>
+            <button class="btn primary" type="submit">Tạo</button>
+        </div>
+    </form>
+</dialog>
+
+<dialog class="modal" id="createQuizModal">
+    <form method="dialog" class="modal-content" id="createQuizForm">
+        <div class="modal-header">
+            <h2>Tạo bài kiểm tra trắc nghiệm</h2>
+            <button class="icon-btn" type="button" id="closeCreateQuiz" aria-label="Đóng">x</button>
+        </div>
+        <label class="field">
+            <span>Tiêu đề</span>
+            <input id="quizTitle" required />
+        </label>
+        <label class="field">
+            <span>Mô tả</span>
+            <textarea id="quizDesc" rows="3"></textarea>
+        </label>
+        <div class="form-grid">
+            <label class="field">
+                <span>Hạn nộp</span>
+                <input id="quizDue" type="date" />
+            </label>
+            <label class="field">
+                <span>Thang điểm</span>
+                <input id="quizMax" type="number" value="10" min="1" />
+            </label>
+        </div>
+        <div class="form-grid">
+            <label class="field">
+                <span>Số câu hỏi</span>
+                <select id="quizQuestionCount" required>
+                    <option value="5">5 câu</option>
+                    <option value="10">10 câu</option>
+                    <option value="15">15 câu</option>
+                    <option value="20">20 câu</option>
+                </select>
+            </label>
+            <label class="field">
+                <span>Chương</span>
+                <select id="quizChapter">
+                    <option value="">Tất cả</option>
+                    <option value="Chương 1">Chương 1</option>
+                    <option value="Chương 2">Chương 2</option>
+                    <option value="Chương 3">Chương 3</option>
+                    <option value="Chương 4">Chương 4</option>
+                    <option value="Chương 5">Chương 5</option>
+                </select>
+            </label>
+        </div>
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="cancelCreateQuiz">Hủy</button>
+            <button class="btn primary" type="submit">Tạo bài</button>
+        </div>
+    </form>
+</dialog>
+
+<!-- Submissions Modal (teacher) -->
+<dialog class="modal" id="submissionsModal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="submissionsTitle">Nộp bài</h2>
+            <button class="icon-btn" type="button" id="closeSubmissions" aria-label="Đóng">x</button>
+        </div>
+        <div style="padding:12px 16px;" id="submissionsList"></div>
+    </div>
+</dialog>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js?v=20260815-tabs"></script>
+</body>
+</html>

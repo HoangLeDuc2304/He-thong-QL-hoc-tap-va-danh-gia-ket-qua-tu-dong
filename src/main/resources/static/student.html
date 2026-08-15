@@ -1,0 +1,241 @@
+<!doctype html>
+<html lang="vi">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sinh viên - QL học tập</title>
+    <link rel="stylesheet" href="styles.css">
+</head>
+<body data-page="student">
+<div class="app-shell">
+    <aside class="sidebar">
+        <div class="brand">
+            <div class="brand-mark">QL</div>
+            <div>
+                <strong>QL Học Tập</strong>
+                <span>Đánh giá tự động</span>
+            </div>
+        </div>
+
+        <nav class="nav-list" aria-label="Chức năng sinh viên">
+            <a href="#dashboard" class="nav-item active" data-view="dashboard" data-title="Dashboard cá nhân">Dashboard cá nhân</a>
+            <a href="#progress" class="nav-item" data-view="progress" data-title="Tiến độ học tập">Tiến độ học tập</a>
+            <a href="#history" class="nav-item" data-view="history" data-title="Lịch sử làm bài">Lịch sử làm bài</a>
+            <a href="#detail" class="nav-item" data-view="detail" data-title="Kết quả chi tiết">Kết quả chi tiết</a>
+            <a href="#notifications" class="nav-item" data-view="notifications" data-title="Thông báo">Thông báo</a>
+        </nav>
+    </aside>
+
+    <main class="main-content">
+        <header class="topbar">
+            <div>
+                <p class="eyebrow">Khu vực sinh viên</p>
+                <h1 id="studentPageTitle">Dashboard cá nhân</h1>
+            </div>
+            <div class="topbar-actions">
+                <div class="user-chip">
+                    <span class="avatar">SV</span>
+                    <span id="studentName">Sinh viên</span>
+                </div>
+                <button class="btn secondary compact" id="logoutBtn" type="button">Đăng xuất</button>
+            </div>
+        </header>
+
+        <section class="stats-grid" data-view-panel="dashboard" aria-label="Dashboard cá nhân">
+            <article class="stat-card">
+                <span>Điểm trung bình</span>
+                <strong id="averageScore">0.0</strong>
+            </article>
+            <article class="stat-card">
+                <span>Bài kiểm tra đã hoàn thành</span>
+                <strong id="completedTests">0</strong>
+            </article>
+            <article class="stat-card">
+                <span>Bài kiểm tra chưa làm</span>
+                <strong id="pendingTests">0</strong>
+            </article>
+            <article class="stat-card">
+                <span>Điểm gần nhất</span>
+                <strong id="latestScore">0.0</strong>
+            </article>
+        </section>
+
+        <section class="course-hero" data-view-panel="dashboard" aria-label="Khóa học nổi bật">
+            <div class="course-hero-copy">
+                <p class="eyebrow">Khóa học đang học</p>
+                <h2 id="featuredCourseName">Lập trình Java cơ bản</h2>
+                <p id="featuredCourseMeta">Tuần 5/10 · Bài tiếp theo: Mảng và phương thức</p>
+                <div class="course-progress" aria-label="Tiến độ khóa học nổi bật">
+                    <span style="width: 68%"></span>
+                </div>
+            </div>
+            <div class="course-hero-actions">
+                <button class="btn primary" type="button" id="continueCourseBtn">Tiếp tục học</button>
+                <button class="btn secondary" type="button" id="viewScheduleBtn">Xem lịch học</button>
+            </div>
+        </section>
+
+        <section class="student-course-grid" data-view-panel="progress" aria-label="Khóa học sinh viên" hidden>
+            <article class="panel courses-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Khóa học của tôi</h2>
+                        <p>Theo dõi môn học, tiến độ và bài cần hoàn thành.</p>
+                    </div>
+                </div>
+                <div class="course-list" id="courseList"></div>
+            </article>
+
+            <article class="panel task-panel">
+                <div class="panel-header">
+                    <div>
+                        <h2>Việc cần làm</h2>
+                        <p>Ưu tiên các bài sắp đến hạn.</p>
+                    </div>
+                </div>
+                <div class="task-list" id="taskList"></div>
+            </article>
+        </section>
+
+        <section class="panel schedule-panel" data-view-panel="progress" hidden>
+            <div class="panel-header">
+                <div>
+                    <h2>Lịch học tuần này</h2>
+                    <p>Các buổi học và kiểm tra trong tuần.</p>
+                </div>
+            </div>
+            <div class="schedule-list" id="scheduleList"></div>
+        </section>
+
+        <section class="student-dashboard" data-view-panel="progress detail" hidden>
+            <article class="panel chart-panel" data-view-panel="progress" hidden>
+                <div class="panel-header">
+                    <div>
+                        <h2>Biểu đồ tiến độ học tập</h2>
+                        <p>Điểm được lấy từ lịch sử làm bài kiểm tra.</p>
+                    </div>
+                </div>
+                <div class="chart-area">
+                    <div class="chart-y-label">Điểm</div>
+                    <svg class="score-chart" viewBox="0 0 640 260" role="img" aria-label="Biểu đồ điểm theo bài kiểm tra">
+                        <g class="grid-lines">
+                            <line x1="54" y1="30" x2="610" y2="30"></line>
+                            <line x1="54" y1="74" x2="610" y2="74"></line>
+                            <line x1="54" y1="118" x2="610" y2="118"></line>
+                            <line x1="54" y1="162" x2="610" y2="162"></line>
+                            <line x1="54" y1="206" x2="610" y2="206"></line>
+                        </g>
+                        <g class="axis-labels">
+                            <text x="24" y="35">10</text>
+                            <text x="30" y="79">8</text>
+                            <text x="30" y="123">6</text>
+                            <text x="30" y="167">4</text>
+                            <text x="30" y="211">2</text>
+                        </g>
+                        <line class="axis" x1="54" y1="20" x2="54" y2="216"></line>
+                        <line class="axis" x1="54" y1="216" x2="610" y2="216"></line>
+                        <polyline id="scoreLine" class="score-line" points=""></polyline>
+                        <g id="scoreDots"></g>
+                        <g id="scoreLabels"></g>
+                    </svg>
+                </div>
+            </article>
+
+            <article class="panel detail-panel" data-view-panel="detail" hidden>
+                <div class="panel-header">
+                    <div>
+                        <h2>Kết quả chi tiết</h2>
+                        <p>Bấm vào một bài kiểm tra để xem thông tin.</p>
+                    </div>
+                </div>
+                <div class="detail-content" id="resultDetail"></div>
+            </article>
+        </section>
+
+        <section class="panel" data-view-panel="progress" id="assignmentsPanel" hidden>
+            <div class="panel-header">
+                <div>
+                    <h2>Bài tập UML</h2>
+                    <p>Danh sách bài UML cần nộp và trạng thái nộp bài.</p>
+                </div>
+            </div>
+            <div class="section-body pad">
+                <div id="assignmentList"></div>
+            </div>
+        </section>
+
+<!-- Submission Modal (student) -->
+<dialog class="modal" id="submitModal">
+    <form method="dialog" class="modal-content" id="submitForm">
+        <div class="modal-header">
+            <h2 id="submitModalTitle">Nộp bài</h2>
+            <button class="icon-btn" type="button" id="closeSubmitModal" aria-label="Đóng">x</button>
+        </div>
+        <label class="field">
+            <span>Mô tả hoặc ghi chú bài làm</span>
+            <textarea id="submissionContent" rows="4" required></textarea>
+        </label>
+        <label class="field">
+            <span>File UML / ảnh sơ đồ</span>
+            <input id="submissionFile" type="file" accept=".png,.jpg,.jpeg,.svg,.pdf,.drawio,.uml,.txt,.doc,.docx" />
+        </label>
+        <div class="modal-actions">
+            <button class="btn secondary" type="button" id="cancelSubmit">Hủy</button>
+            <button class="btn primary" type="submit">Nộp</button>
+        </div>
+    </form>
+</dialog>
+
+        <section class="panel history-panel" data-view-panel="history" hidden>
+            <div class="panel-header">
+                <div>
+                    <h2>Lịch sử làm bài</h2>
+                    <p>Sinh viên có thể xem điểm và thời gian làm bài.</p>
+                </div>
+            </div>
+
+            <div class="table-wrap">
+                <table>
+                    <thead>
+                    <tr>
+                        <th>Bài kiểm tra</th>
+                        <th>Điểm</th>
+                        <th>Thời gian</th>
+                        <th>Số câu đúng</th>
+                        <th>Thao tác</th>
+                    </tr>
+                    </thead>
+                    <tbody id="historyTable"></tbody>
+                </table>
+            </div>
+        </section>
+
+        <section class="panel notification-panel" data-view-panel="notifications" hidden>
+            <div class="panel-header">
+                <div>
+                    <h2>Thông báo</h2>
+                    <p>Cập nhật mới từ giảng viên và hệ thống.</p>
+                </div>
+            </div>
+            <div class="notification-list">
+                <article class="notification-item unread">
+                    <strong>JAVA101 mở Quiz Chương 5</strong>
+                    <span>Hạn nộp 20:00 hôm nay. Bạn nên hoàn thành trước giờ học tối.</span>
+                </article>
+                <article class="notification-item">
+                    <strong>WEB202 đã có nhận xét bài CSS Grid</strong>
+                    <span>Giảng viên đã phản hồi phần layout responsive.</span>
+                </article>
+                <article class="notification-item">
+                    <strong>DBI201 cập nhật lịch kiểm tra</strong>
+                    <span>Bài kiểm tra SQL Join diễn ra vào thứ Sáu tuần này.</span>
+                </article>
+            </div>
+        </section>
+    </main>
+</div>
+
+<div class="toast" id="toast" role="status" aria-live="polite"></div>
+<script src="app.js?v=20260815-tabs"></script>
+</body>
+</html>
