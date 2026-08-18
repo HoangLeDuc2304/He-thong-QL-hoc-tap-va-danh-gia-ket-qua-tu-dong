@@ -1,0 +1,245 @@
+/* ============================================================================
+   STUDENT INTERFACE STYLES (UNIFIED WITH TEACHER)
+   ========================================================================== */
+
+.student-shell {
+  display: flex;
+  height: 100vh;
+  background-color: #f5f7fa;
+}
+
+/* SIDEBAR */
+.student-sidebar {
+  width: 280px;
+  background: linear-gradient(135deg, #1e293b 0%, #0f172a 100%);
+  padding: 24px 16px;
+  overflow-y: auto;
+  box-shadow: 2px 0 8px rgba(0, 0, 0, 0.1);
+  border-right: 2px solid #334155;
+}
+
+.student-brand {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 32px;
+  padding: 12px;
+  background: rgba(255, 255, 255, 0.08);
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.student-brand:hover {
+  background: rgba(255, 255, 255, 0.12);
+}
+
+.student-brand__mark {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-weight: 700;
+  font-size: 16px;
+  border-radius: 8px;
+}
+
+.student-brand__name {
+  margin: 0;
+  color: #e2e8f0;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.student-brand__caption {
+  margin: 0;
+  color: #94a3b8;
+  font-size: 12px;
+}
+
+/* NAVIGATION */
+.student-nav {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.student-nav__item {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: transparent;
+  border: none;
+  color: #cbd5e1;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  border-radius: 6px;
+  transition: all 0.2s ease;
+  text-align: left;
+}
+
+.student-nav__item:hover {
+  background: rgba(255, 255, 255, 0.08);
+  color: #e2e8f0;
+}
+
+.student-nav__item--active {
+  background: linear-gradient(90deg, rgba(16, 185, 129, 0.2) 0%, rgba(16, 185, 129, 0.1) 100%);
+  color: #10b981;
+  border-left: 3px solid #10b981;
+  padding-left: 11px;
+}
+
+.student-nav__icon {
+  font-size: 18px;
+  min-width: 20px;
+}
+
+.student-nav__label {
+  flex: 1;
+}
+
+/* MAIN CONTENT */
+.student-main {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  overflow: hidden;
+}
+
+.student-page-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 20px 32px;
+  background: white;
+  border-bottom: 1px solid #e2e8f0;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
+}
+
+.student-page-header > div:first-child {
+  flex: 1;
+}
+
+.student-eyebrow {
+  margin: 0 0 4px 0;
+  color: #64748b;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+}
+
+.student-page-header h1 {
+  margin: 0;
+  color: #1e293b;
+  font-size: 28px;
+  font-weight: 700;
+}
+
+.student-account {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.student-account__user {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.student-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 40px;
+  height: 40px;
+  background: linear-gradient(135deg, #10b981 0%, #059669 100%);
+  color: white;
+  font-weight: 600;
+  border-radius: 50%;
+  font-size: 14px;
+}
+
+.student-account__name {
+  margin: 0;
+  color: #1e293b;
+  font-weight: 600;
+  font-size: 14px;
+}
+
+.student-account__role {
+  margin: 0;
+  color: #64748b;
+  font-size: 12px;
+}
+
+.student-button {
+  padding: 8px 16px;
+  background: transparent;
+  border: 1px solid #cbd5e1;
+  color: #475569;
+  font-size: 13px;
+  font-weight: 500;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.student-button:hover {
+  background: #f1f5f9;
+  border-color: #94a3b8;
+  color: #1e293b;
+}
+
+.student-button--logout {
+  color: #dc2626;
+  border-color: #fecaca;
+}
+
+.student-button--logout:hover {
+  background: #fee2e2;
+  border-color: #fca5a5;
+  color: #b91c1c;
+}
+
+/* CONTENT AREA */
+.student-content {
+  flex: 1;
+  overflow-y: auto;
+  padding: 32px;
+}
+
+/* RESPONSIVE */
+@media (max-width: 768px) {
+  .student-shell {
+    flex-direction: column;
+  }
+
+  .student-sidebar {
+    width: 100%;
+    padding: 12px;
+  }
+
+  .student-content {
+    padding: 16px;
+  }
+
+  .student-page-header {
+    flex-direction: column;
+    align-items: start;
+    gap: 12px;
+    padding: 12px 16px;
+  }
+
+  .student-account {
+    width: 100%;
+    justify-content: space-between;
+  }
+}
